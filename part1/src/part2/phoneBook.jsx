@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import phoneService from '../services/phoneNumbers'
 
 
 const Filter = (props) => {
@@ -25,14 +25,17 @@ const PersonForm = (props) => {
   )
 }
 
-const Persons = ({persons, filterText}) => {
+const Persons = ({persons, filterText, handleDeletePerson}) => {
   return (
     <div>
         <ul>
           {persons.map((p) => {
             if (p.name.toLowerCase().includes(filterText.toLowerCase())) {
               return (
-                <li key={p.name}>{p.name} {p.number}</li>
+                <li key={p.name}>{p.name} {p.number} 
+                <button onClick={() => handleDeletePerson(p.name, p.id)}>delete</button> 
+                </li>
+                
               )
             } 
             
@@ -50,11 +53,8 @@ const AppPhoneBook = () => {
   const [filterText, setFilterText] = useState('')
 
   useEffect( () => {
-    axios
-    .get('http://localhost:3001/persons')
-    .then((response) => {
-      setPersons(response.data)
-    })
+    phoneService.getAll()
+    .then(person => setPersons(person))
   }, [])
 
   const handleSetNewName = (event) => {
@@ -72,19 +72,38 @@ const AppPhoneBook = () => {
     const names = persons.map((p) => p.name)
 
     if (names.includes(newName)) {
-      alert(`${newName} is already added to phonebook`)
+      const confirmation = confirm(`${newName} is already added to phonebook, replace the old number with a new number?`)
+      if (confirmation) {
+        const person = persons.find(p => p.name === newName)
+        const changedPerson = {...person, number : number}
+        const changedPersonId = changedPerson.id
+        phoneService
+        .update(changedPersonId, changedPerson)
+        .then(changedPerson => setPersons(persons.map(person => person.id === changedPersonId ? changedPerson : person)))
+      }
     } else {
       const newPerson = {
         name : newName,
         number : number
       }
-      setPersons(persons.concat(newPerson))
+      // call the service to create a new number
+      phoneService.create(newPerson)
+      .then(newPerson => setPersons(persons.concat(newPerson)))
+      // setPersons(persons.concat(newPerson))
     }
     
   }
 
   const handleSetFilterText = (event) => {
     setFilterText(event.target.value)
+  }
+
+  const handleDeletePerson = (name, id) => {
+    const confirmation = confirm(`Delete ${name} ?`)
+    if (confirmation) {
+      phoneService.remove(id)
+      .then(deletedPerson => setPersons(persons.filter(person => person.id !== deletedPerson.id)))
+    }
   }
 
   return (
@@ -103,7 +122,7 @@ const AppPhoneBook = () => {
 
       <h2>Numbers</h2>
 
-      <Persons persons={persons} filterText={filterText}/>
+      <Persons persons={persons} filterText={filterText} handleDeletePerson={handleDeletePerson}/>
       
     </div>
   )
