@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import phoneService from '../services/phoneNumbers'
-
+import Notification from './components/Notification'
 
 const Filter = (props) => {
   return (
@@ -51,6 +51,7 @@ const AppPhoneBook = () => {
   const [newName, setNewName] = useState('')
   const [number, setNumber] = useState('')
   const [filterText, setFilterText] = useState('')
+  const [displayMessage, setDisplayMessage] = useState('')
 
   useEffect( () => {
     phoneService.getAll()
@@ -73,13 +74,26 @@ const AppPhoneBook = () => {
 
     if (names.includes(newName)) {
       const confirmation = confirm(`${newName} is already added to phonebook, replace the old number with a new number?`)
+
+      // changing number of person already in phoneBook
       if (confirmation) {
         const person = persons.find(p => p.name === newName)
         const changedPerson = {...person, number : number}
         const changedPersonId = changedPerson.id
         phoneService
         .update(changedPersonId, changedPerson)
-        .then(changedPerson => setPersons(persons.map(person => person.id === changedPersonId ? changedPerson : person)))
+        .then(changedPerson => setPersons(
+        persons.map(person => person.id === changedPersonId ? changedPerson : person)))
+        .catch(error => {
+          setDisplayMessage(`Information of ${newName} has already been removed from the server`)
+          setTimeout(() => setDisplayMessage(''), 5000)
+          setPersons(persons.filter(p => p.name !== newName))
+        }
+        )
+
+
+        setDisplayMessage(`Changed ${newName}'s number to ${number}`)
+        setTimeout(() => setDisplayMessage(''), 5000)
       }
     } else {
       const newPerson = {
@@ -89,7 +103,9 @@ const AppPhoneBook = () => {
       // call the service to create a new number
       phoneService.create(newPerson)
       .then(newPerson => setPersons(persons.concat(newPerson)))
-      // setPersons(persons.concat(newPerson))
+
+      setDisplayMessage(`Added ${newName}`)
+      setTimeout(() => setDisplayMessage(''), 5000)
     }
     
   }
@@ -109,6 +125,8 @@ const AppPhoneBook = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={displayMessage} />
+
       <Filter filterText={filterText} onChange={handleSetFilterText} />
 
       <h2>add a new</h2>
