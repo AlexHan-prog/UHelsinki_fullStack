@@ -72,7 +72,7 @@ const NotesApp = () => {
 
   return (
     <div>
-      <h1>Notes</h1>
+      <h1>Notes and More</h1>
       <Notification message={errorMessage} />
       <div>
         <button onClick={() => setShowAll(!showAll)}>
