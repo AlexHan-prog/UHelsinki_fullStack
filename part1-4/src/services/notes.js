@@ -1,10 +1,10 @@
 import axios from 'axios'
-const baseUrl = 'http://localhost:3001/notes'
+const baseUrl = 'http://localhost:3001/api/notes'
 
 /* axios.get returns a promise object as it asyncrhonously performs
 the get request. .then() says when the promise is fulfilled, perform this callback function
 In this case of getAll the callback function is between the then() : 'response => response.data"
-A callback function is a function that will be performed eventually not syncrhonously. */
+A callback function is a function that will be performed eventually not synchronously. */
 const getAll = () => {
   const request = axios.get(baseUrl)
   const nonExisting = {
